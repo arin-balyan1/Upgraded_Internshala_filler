@@ -5,20 +5,20 @@ import fs from 'fs';
 import path from 'path';
 import { User_Model, Submitted_forms_Model, Internshala_user_Model } from './data_base.js';
 import { generate } from './ai.js';
-import dotenv from 'dotenv'; 
+import dotenv from 'dotenv';
 dotenv.config();
 const JWT_SECRET='ajldkldlkdshdhfh2342fddssxcbnb';
-//await mongoose.connect("mongodb+srv://arinbalyan:ldZsIikKx3mlwSRf@cluster0.cksskgm.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0/Internshala_filler_database");
+await mongoose.connect("");
 puppeteer.use(StealthPlugin());
 let submission_detail=[];
 
-const uploadResume = async (page, resumePath, sendProgress) => { // Added sendProgress
+const uploadResume = async (page, resumePath, sendProgress) => {
     try {
         if (!fs.existsSync(resumePath)) {
             throw new Error(`Resume file not found: ${resumePath}`);
         }
 
-        sendProgress(`Attempting to upload resume: ${resumePath}`); // Use sendProgress
+        sendProgress(`Attempting to upload resume: ${resumePath}`);
 
         const possibleSelectors = [
             'input[type="file"]',
@@ -37,7 +37,7 @@ const uploadResume = async (page, resumePath, sendProgress) => { // Added sendPr
                 await page.waitForSelector(selector, { timeout: 3000 });
                 fileInput = await page.$(selector);
                 if (fileInput) {
-                    sendProgress(`Found file input with selector: ${selector}`); // Use sendProgress
+                    sendProgress(`Found file input with selector: ${selector}`);
                     break;
                 }
             } catch (e) {}
@@ -46,27 +46,26 @@ const uploadResume = async (page, resumePath, sendProgress) => { // Added sendPr
         if (fileInput) {
             const absolutePath = path.resolve(resumePath);
             await fileInput.uploadFile(absolutePath);
-            sendProgress('Resume uploaded successfully'); // Use sendProgress
+            sendProgress('Resume uploaded successfully');
             
             await new Promise(res => setTimeout(res, 3000));
             
         } else {
-            sendProgress('WARN: No file input found - resume upload may not be required for this internship'); // Use sendProgress
+            sendProgress('WARN: No file input found - resume upload may not be required for this internship');
             return false;
         }
 
         return true;
 
     } catch (error) {
-        sendProgress(`ERROR: Resume upload failed: ${error.message}`); // Use sendProgress
-        // await page.screenshot({ path: `resume-upload-error-${Date.now()}.png` });
+        sendProgress(`ERROR: Resume upload failed: ${error.message}`);
         return false;
     }
 };
 
-const submitApplication = async (page, sendProgress) => { // Added sendProgress
+const submitApplication = async (page, sendProgress) => {
     const possibleSubmitSelectors = [
-        'input[type="submit"][id="submit"]',  
+        'input[type="submit"][id="submit"]', 
         'button[type="submit"]',
         '#submit',
         '.btn-primary',
@@ -85,23 +84,22 @@ const submitApplication = async (page, sendProgress) => { // Added sendProgress
                 await submitButton.evaluate(btn => btn.scrollIntoView());
                 await new Promise(res => setTimeout(res, 1000));
                 await submitButton.click();
-                sendProgress(`Submitted application using selector: ${selector}`); // Use sendProgress
+                sendProgress(`Submitted application using selector: ${selector}`);
                 submitted = true;
                 break;
             }
         } catch (e) {
-            // Selector not found, try next
         }
     }
     if (!submitted) {
-        sendProgress('WARN: No submit button found or clickable.'); // Use sendProgress
+        sendProgress('WARN: No submit button found or clickable.');
     }
     return submitted;
 };
 
-const clickApplyNowButton = async (page, sendProgress) => { // Added sendProgress
+const clickApplyNowButton = async (page, sendProgress) => {
     try {
-        sendProgress('Attempting to click "Apply now" button...'); // Use sendProgress
+        sendProgress('Attempting to click "Apply now" button...');
         
         await page.waitForSelector('#easy_apply_button', { visible: true, timeout: 10000 });
         
@@ -111,21 +109,20 @@ const clickApplyNowButton = async (page, sendProgress) => { // Added sendProgres
         });
         
         await page.click('#easy_apply_button');
-        sendProgress('Successfully clicked "Apply now" button'); // Use sendProgress
+        sendProgress('Successfully clicked "Apply now" button');
         
         await new Promise(res => setTimeout(res, 3000));
         
         return true;
     } catch (error) {
-        sendProgress(`ERROR: Error clicking "Apply now" button: ${error.message}`); // Use sendProgress
-        // await page.screenshot({ path: `apply-now-error-${Date.now()}.png` });
+        sendProgress(`ERROR: Error clicking "Apply now" button: ${error.message}`);
         return false;
     }
 };
 
-const fillAdditionalQuestions = async (page, company, title, sendProgress, resumePath) => { // Added resumePath
+const fillAdditionalQuestions = async (page, company, title, sendProgress, resumePath) => {
     try {
-        sendProgress('Checking for additional questions...'); // Use sendProgress
+        sendProgress('Checking for additional questions...');
         await new Promise(res => setTimeout(res, 2000));
         
         const textAreas = await page.$$('textarea');
@@ -137,52 +134,49 @@ const fillAdditionalQuestions = async (page, company, title, sendProgress, resum
                     return labelEl ? labelEl.textContent.trim() : '';
                 }, textAreas[i]);
                 
-                sendProgress(`Found textarea with label: "${label}" and placeholder: "${placeholder}"`); // Use sendProgress
+                sendProgress(`Found textarea with label: "${label}" and placeholder: "${placeholder}"`);
                 
-                // Handle Cover Letter specifically if present
                 try {
                     const coverLetterHolderSelector = '#cover_letter_holder';
                     const coverLetterElement = await page.$(coverLetterHolderSelector);
                     if (coverLetterElement) {
-                        sendProgress('Attempting to fill cover letter...'); // Use sendProgress
-                        await coverLetterElement.click(); // Click the visible holder
+                        sendProgress('Attempting to fill cover letter...');
+                        await coverLetterElement.click();
                         const dynamicPrompt = `Write a professional cover letter for the company ${company}. The title of the job is ${title}.Ensure the letter highlights relevant skills and expresses enthusiasm for this specific role.`;
-                        const coverLetter = await generate(dynamicPrompt, resumePath); // Pass resumePath
+                        const coverLetter = await generate(dynamicPrompt, resumePath);
                         await page.type(coverLetterHolderSelector, coverLetter, { delay: 10 });
-                        sendProgress('Filled cover letter.'); // Use sendProgress
+                        sendProgress('Filled cover letter.');
                     }
                 } catch(err) {
-                    sendProgress(`WARN: Could not fill cover letter: ${err.message}`); // Use sendProgress
+                    sendProgress(`WARN: Could not fill cover letter: ${err.message}`);
                 }
 
-                // Handle other text areas
                 if (placeholder.toLowerCase().includes('why') || label.toLowerCase().includes('why')) {
                     const dynamicPrompt = `As a candidate, answer the question: "Why should we hire you for our company ${company} for the role of ${title}?" Highlight your fit based on the resume.`;
-                    const hire_me = await generate(dynamicPrompt, resumePath); // Pass resumePath
+                    const hire_me = await generate(dynamicPrompt, resumePath);
                     await textAreas[i].click();
                     await textAreas[i].type(hire_me);
-                    sendProgress('Filled "why interested" question.'); // Use sendProgress
+                    sendProgress('Filled "why interested" question.');
                 } else if (placeholder.toLowerCase().includes('experience') || label.toLowerCase().includes('experience')) {
                     const dynamicPrompt = `As a candidate for the ${title} position at ${company}, describe your relevant experience in this field and briefly discuss a project related to this role from your resume.`;
-                    const ex = await generate(dynamicPrompt, resumePath); // Pass resumePath
+                    const ex = await generate(dynamicPrompt, resumePath);
                     await textAreas[i].click();
                     await textAreas[i].type(ex);
-                    sendProgress('Filled experience question.'); // Use sendProgress
+                    sendProgress('Filled experience question.');
                 } else {
                     const genericPrompt = `As a job candidate applying for the ${title} position at ${company}, please provide a concise and relevant answer to the following question found on the application form: Question: "${label} and ${placeholder} " Base your answer on the skills, experience, and projects detailed in the attached resume, ensuring it aligns with the role's requirements. Be professional and highlight your suitability.`;
-                    const generic = await generate(genericPrompt, resumePath); // Pass resumePath
+                    const generic = await generate(genericPrompt, resumePath);
                     await textAreas[i].click();
                     await textAreas[i].type(generic);
-                    sendProgress('Filled generic question.'); // Use sendProgress
+                    sendProgress('Filled generic question.');
                 }
                 
                 await new Promise(res => setTimeout(res, 1000));
             } catch (textError) {
-                sendProgress(`WARN: Could not fill textarea ${i}: ${textError.message}`); // Use sendProgress
+                sendProgress(`WARN: Could not fill textarea ${i}: ${textError.message}`);
             }
         }
         
-        // Handle radio buttons
         const radioButtons = await page.$$('input[type="radio"]');
         for (let radio of radioButtons) {
             try {
@@ -191,34 +185,24 @@ const fillAdditionalQuestions = async (page, company, title, sendProgress, resum
                 
                 if (value && (value.toLowerCase() === 'yes' || value.toLowerCase() === 'true')) {
                     await radio.click();
-                    sendProgress(`Selected radio button: ${name} = ${value}`); // Use sendProgress
+                    sendProgress(`Selected radio button: ${name} = ${value}`);
                     await new Promise(res => setTimeout(res, 500));
                 }
             } catch (radioError) {
-                sendProgress(`WARN: Could not handle radio button: ${radioError.message}`); // Use sendProgress
+                sendProgress(`WARN: Could not handle radio button: ${radioError.message}`);
             }
         }
         
         return true;
     } catch (error) {
-        sendProgress(`ERROR: Error filling additional questions: ${error.message}`); // Use sendProgress
+        sendProgress(`ERROR: Error filling additional questions: ${error.message}`);
         return false;
     }
 };
 
-/**
- * Main function to run the Internshala automation.
- * @param {object} options - Options for the automation.
- * @param {string} options.email - Internshala email.
- * @param {string} options.param.password - Internshala password.
- * @param {string} options.resumePath - Path to the resume PDF.
- * @param {function(string): void} sendProgress - Callback to send progress updates to the renderer.
- * @param {function({title: string, company: string}): void} sendSubmittedInternship - Callback to send details of a submitted internship.
- * @returns {Promise<Array<{title: string, company: string}>>} - List of submitted internships.
- */
 export const runInternshalaAutomation = async ({ email, password, resumePath }, sendProgress, sendSubmittedInternship) => {
     const browser = await puppeteer.launch({
-        headless: false, // Changed to false to make the browser visible
+        headless: false,
         defaultViewport: null,
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
@@ -228,7 +212,7 @@ export const runInternshalaAutomation = async ({ email, password, resumePath }, 
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Edg/124.0.2478.80'
     );
 
-    page.setDefaultNavigationTimeout(60000); // Increased timeout
+    page.setDefaultNavigationTimeout(60000);
 
     let submission_detail = [];
 
@@ -252,7 +236,7 @@ export const runInternshalaAutomation = async ({ email, password, resumePath }, 
         sendProgress('Clicking login submit...');
         await page.click('#modal_login_submit');
         await new Promise(res => setTimeout(res, 500));
-        await page.click('#modal_login_submit'); // Sometimes needs a second click
+        await page.click('#modal_login_submit');
         await new Promise(res => setTimeout(res, 5000));
 
         sendProgress('Navigating to matching preferences...');
@@ -278,12 +262,10 @@ export const runInternshalaAutomation = async ({ email, password, resumePath }, 
             await page.click('#select_category_chosen');
             await page.waitForSelector('.chosen-results .active-result', { visible: true, timeout: 5000 });
             await new Promise(res => setTimeout(res, 1000));
-            // This selects the 140th option. You might want to make this configurable or dynamic.
             await page.click('li.active-result[data-option-array-index="140"]'); 
             await new Promise(res => setTimeout(res, 3000));
         } catch (error) {
             sendProgress(`ERROR: Error during category selection: ${error.message}`);
-            // await page.screenshot({ path: 'error-screenshot.png' });
         }
 
         sendProgress('Scraping internship data...');
@@ -309,7 +291,7 @@ export const runInternshalaAutomation = async ({ email, password, resumePath }, 
 
         sendProgress(`Found ${internshipData.length} internships.`);
 
-        let no_of_submission = Math.min(10, internshipData.length); // Limit to 10 for testing, adjust as needed
+        let no_of_submission = Math.min(10, internshipData.length);
 
         for (let i = 0; i < no_of_submission; i++) {
             let urllink = internshipData[i].fullUrl;
@@ -330,7 +312,6 @@ export const runInternshalaAutomation = async ({ email, password, resumePath }, 
                     sendProgress('Waiting for application form...');
                     await new Promise(res => setTimeout(res, 5000));
 
-                    // Handle "Proceed to application" button if it appears
                     try {
                         const proceedButtonSelector = 'button.btn.btn-large.education_incomplete.proceed-btn';
                         const proceedButton = await page.$(proceedButtonSelector);
@@ -355,7 +336,6 @@ export const runInternshalaAutomation = async ({ email, password, resumePath }, 
                         sendProgress(`WARN: Error handling 'Proceed to application' button: ${error.message}`);
                     }
 
-                    // Handle availability radio button
                     try {
                         await page.waitForSelector('#radio1', { visible: true, timeout: 5000 });
                         await page.click('#radio1');
@@ -365,19 +345,18 @@ export const runInternshalaAutomation = async ({ email, password, resumePath }, 
                     }
 
                     await uploadResume(page, resumePath, sendProgress);
-                    // Pass resumePath to fillAdditionalQuestions
                     await fillAdditionalQuestions(page, internshipData[i].company, internshipData[i].title, sendProgress, resumePath);
                     const submitted = await submitApplication(page, sendProgress);
 
                     if (submitted) {
                         const submittedInternship = { title: internshipData[i].title, company: internshipData[i].company, url: internshipData[i].fullUrl };
                         submission_detail.push(submittedInternship);
-                        sendSubmittedInternship(submittedInternship); // Send real-time update
+                        sendSubmittedInternship(submittedInternship);
                         sendProgress(`Successfully submitted application for: ${internshipData[i].title} at ${internshipData[i].company}`);
                     } else {
                         sendProgress(`Failed to submit application for: ${internshipData[i].title} at ${internshipData[i].company}`);
                     }
-                    await new Promise(res => setTimeout(res, 5000)); // Wait after submission
+                    await new Promise(res => setTimeout(res, 5000));
                 } else {
                     sendProgress(`Could not proceed with application for: ${internshipData[i].title} at ${internshipData[i].company} (Apply Now button failed).`);
                 }

@@ -1,21 +1,33 @@
-// data_base.js (Placeholder - replace with your actual database models)
+// data_base.js
+import mongoose from 'mongoose';
 
-// Example of how your models might be structured
-// import mongoose from 'mongoose';
+const { Schema, Types } = mongoose;
 
-// const userSchema = new mongoose.Schema({ /* ... */ });
-// export const User_Model = mongoose.model('User', userSchema);
+const userSchema = new Schema({
+    email: String,
+    password: String,
+    username: String
+});
 
-// const submittedFormsSchema = new mongoose.Schema({ /* ... */ });
-// export const Submitted_forms_Model = mongoose.model('SubmittedForm', submittedFormsSchema);
+const submittedFormsSchema = new Schema({
+    Title: String,
+    company: String,
+    userId: Types.ObjectId
+});
 
-// const internshalaUserSchema = new mongoose.Schema({ /* ... */ });
-// export const Internshala_user_Model = mongoose.model('InternshalaUser', internshalaUserSchema);
+const internshalaUserSchema = new Schema({
+    internshalla_email: String,
+    internshalla_password: String,
+    userId: Types.ObjectId
+});
 
-console.log("Database models are ready (placeholder).");
+const User_Model = mongoose.model('users', userSchema);
+const Submitted_forms_Model = mongoose.model('Submitted_forms', submittedFormsSchema);
+const Internshala_user_Model = mongoose.model('internshalla_user', internshalaUserSchema);
 
-// If you use these models, ensure your main.js connects to MongoDB.
-// For now, these are just placeholders to avoid import errors.
-export const User_Model = {};
-export const Submitted_forms_Model = {};
-export const Internshala_user_Model = {};
+
+export {
+    User_Model,
+    Submitted_forms_Model,
+    Internshala_user_Model
+};

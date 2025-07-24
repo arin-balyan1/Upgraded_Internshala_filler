@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import 'dotenv/config';
 import { PdfReader } from 'pdfreader';
-import fs from 'fs'; 
+import fs from 'fs';
 
 const genAI = new GoogleGenerativeAI(process.env.API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash"});
@@ -22,10 +22,7 @@ async function getPdfText(pdfFilePath) {
     return readPdfPromise;
 }
 
-// Modified to accept resumePath as an argument
 export const generate = async (initialPrompt, resumePath) => {
-    // Use the resumePath passed as an argument directly
-    // This path comes from the file dialog selection in the frontend
     let extractedResumeText = '';
 
     try {
@@ -34,7 +31,7 @@ export const generate = async (initialPrompt, resumePath) => {
             return "Resume file not found or invalid path provided.";
         }
 
-        extractedResumeText = await getPdfText(resumePath); // Use the provided resumePath
+        extractedResumeText = await getPdfText(resumePath);
 
         if (!extractedResumeText.trim()) {
             console.error("Could not extract any meaningful text from the PDF. Aborting.");
@@ -50,16 +47,16 @@ The response should be under 2000 characters
 ${extractedResumeText}
 ---RESUME_END---
 `;
-        console.log("Initial Prompt for AI:", initialPrompt); // Added for clarity
+        console.log("Initial Prompt for AI:", initialPrompt);
         console.log("Generating content...");
         const result = await model.generateContent(finalPrompt);
         const generatedText = result.response.text();
-        console.log("Generated Content:", generatedText); // Added for clarity
+        console.log("Generated Content:", generatedText);
         console.log("Content generation complete.");
         return generatedText;
 
     } catch (err) {
         console.error("Error during PDF reading or content generation:", err);
-        return `Error generating content: ${err.message}`; // Return error message
+        return `Error generating content: ${err.message}`;
     }
 };

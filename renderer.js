@@ -7,21 +7,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const logArea = document.getElementById('logArea');
     const submittedList = document.getElementById('submittedList');
 
-    // Populate fields from localStorage if available (for convenience during development)
     emailInput.value = localStorage.getItem('internshala_email') || '';
     passwordInput.value = localStorage.getItem('internshala_password') || '';
     resumePathInput.value = localStorage.getItem('internshala_resume_path') || '';
 
-    // Listen for progress updates from the main process
     window.electronAPI.onAutomationProgress((message) => {
         const timestamp = new Date().toLocaleTimeString();
         logArea.innerHTML += `<div class="text-gray-400">${timestamp}</div><div>${message}</div>`;
-        logArea.scrollTop = logArea.scrollHeight; // Auto-scroll to bottom
+        logArea.scrollTop = logArea.scrollHeight;
     });
 
-    // New: Listen for submitted internship updates from the main process
     window.electronAPI.onInternshipSubmitted((internshipDetails) => {
-        // Clear the "No internships submitted yet" message if it's still there
         if (submittedList.querySelector('.italic')) {
             submittedList.innerHTML = '';
         }
@@ -29,10 +25,10 @@ document.addEventListener('DOMContentLoaded', () => {
         li.className = 'py-2 px-3 border-b border-gray-200 last:border-b-0 text-gray-800';
         
         const link = document.createElement('a');
-        link.href = internshipDetails.url; // Use the 'url' property from internshipDetails
+        link.href = internshipDetails.url;
         link.textContent = `${internshipDetails.title} at ${internshipDetails.company}`;
-        link.target = '_blank'; // Open link in a new tab/window
-        link.className = 'text-blue-600 hover:underline'; // Add some styling for the link
+        link.target = '_blank';
+        link.className = 'text-blue-600 hover:underline';
 
         li.appendChild(link);
         submittedList.appendChild(li);
@@ -52,18 +48,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const resumePath = resumePathInput.value;
 
         if (!email || !password || !resumePath) {
-            alert('Please fill in all fields and select a resume file.'); // Using alert for simplicity, consider custom modal
+            alert('Please fill in all fields and select a resume file.');
             return;
         }
 
-        // Save credentials to localStorage (for convenience, not for production security)
         localStorage.setItem('internshala_email', email);
         localStorage.setItem('internshala_password', password);
 
         startAutomationBtn.disabled = true;
         selectResumeBtn.disabled = true;
         logArea.innerHTML = '<div class="text-yellow-400">Starting automation...</div>';
-        submittedList.innerHTML = '<li class="text-gray-600 italic">No internships submitted yet.</li>'; // Clear previous results
+        submittedList.innerHTML = '<li class="text-gray-600 italic">No internships submitted yet.</li>';
 
         try {
             const result = await window.electronAPI.startAutomation({ email, password, resumePath });
