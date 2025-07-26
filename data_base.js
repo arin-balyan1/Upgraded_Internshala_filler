@@ -1,4 +1,4 @@
-// data_base.js
+
 import mongoose from 'mongoose';
 
 const { Schema, Types } = mongoose;
