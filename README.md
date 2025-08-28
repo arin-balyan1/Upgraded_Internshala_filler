@@ -29,8 +29,8 @@ Other Tools: IPC communication between main, preload, and renderer processes
 
 ## 📂 Project Structure
 
-├── main.js                # Electron main process, creates window & IPC handlers
-├── preload.js             # Secure bridge between renderer and main
-├── puppeteer_automation.js # Core automation logic using Puppeteer
-├── renderer.js            # Frontend logic (logs, UI updates, progress, submitted list)
-├── index.html             # App UI
+├── main.js               
+├── preload.js             
+├── puppeteer_automation.js 
+├── renderer.js            
+├── index.html  
