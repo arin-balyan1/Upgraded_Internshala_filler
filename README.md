@@ -29,12 +29,10 @@ AI: Gemini API (for intelligent answer/cover letter generation)
 Other Tools: IPC communication between main, preload, and renderer processes
 
 ## 📂 Project Structure
-
+├── renderer.js
 ├── main.js               
 ├── preload.js  
 ├── puppeteer_automation.js 
-
 ├── index.html  
 ├── ai.js
 ├──data_base.js
-├── renderer.js
