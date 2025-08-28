@@ -32,5 +32,6 @@ Other Tools: IPC communication between main, preload, and renderer processes
 ├── main.js               
 ├── preload.js             
 ├── puppeteer_automation.js
+
 ├── renderer.js            
 ├── index.html  
