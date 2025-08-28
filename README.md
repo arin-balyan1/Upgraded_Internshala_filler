@@ -1,5 +1,6 @@
 ## 🚀 Internshala Automation Tool
 
+![image alt](https://github.com/arin-balyan1/Upgraded_Internshala_filler/blob/6158e06e39c133089dbbb741b353f783248590fd/image.png)
 ## ✨ Features
 
 🔑 Secure Login with user credentials
